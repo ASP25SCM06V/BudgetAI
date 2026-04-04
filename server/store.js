@@ -1,0 +1,5 @@
+// In-memory store — fine for hackathon, single user
+let accessToken = null
+
+export const setAccessToken = (token) => { accessToken = token }
+export const getAccessToken = () => accessToken
