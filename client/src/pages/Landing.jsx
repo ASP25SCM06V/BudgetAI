@@ -136,7 +136,7 @@ export default function Landing() {
             onClick={handleConnectBank}
             disabled={loading}
           >
-            {loading && linkToken === null && status !== '' ? 'Connecting...' : 'Connect My Bank'}
+            {loading ? 'Connecting...' : 'Connect My Bank'}
           </button>
 
           <button
