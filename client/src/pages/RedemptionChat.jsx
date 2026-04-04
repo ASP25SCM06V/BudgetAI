@@ -37,6 +37,10 @@ export default function RedemptionChat() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  useEffect(() => {
+    if (!villain) navigate('/')
+  }, [villain, navigate])
+
   const sendMessage = async () => {
     if (!input.trim() || loading) return
     const userMsg = input.trim()
@@ -51,14 +55,12 @@ export default function RedemptionChat() {
         ...prev,
         { role: 'villain', text: 'Even I am speechless. Try again.' },
       ])
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
-  if (!villain) {
-    navigate('/')
-    return null
-  }
+  if (!villain) return null
 
   return (
     <div
