@@ -1,0 +1,181 @@
+<h2>Full UI Flow — Both Features</h2>
+<p class="subtitle">Review the screen-by-screen design. Click to select any concerns.</p>
+
+<div class="section">
+  <h3>🔐 Feature 1 — Google Auth + Gmail Scanner</h3>
+
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Screen 1 — Updated Landing Page</div>
+      <div class="mockup-body" style="background:#0F0D0C;padding:24px;color:#F7F2EC;text-align:center;border-radius:8px">
+        <div style="font-size:48px;margin-bottom:8px">💀</div>
+        <div style="font-family:sans-serif;font-size:22px;font-weight:800;margin-bottom:4px">SpendShame</div>
+        <div style="font-size:11px;color:#8A7F76;margin-bottom:20px">Your money has a villain. His name is you.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;max-width:220px;margin:0 auto">
+          <button class="mock-button" style="background:#E8341A;color:white;border:none;padding:12px;border-radius:8px;font-size:12px">Connect My Bank (Plaid)</button>
+          <button class="mock-button" style="background:#4285F4;color:white;border:none;padding:12px;border-radius:8px;font-size:12px">🔍 Scan Gmail Instead</button>
+          <button class="mock-button" style="background:transparent;border:1px solid rgba(247,242,236,0.2);color:#8A7F76;padding:10px;border-radius:8px;font-size:11px">Try Demo Mode</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-header">Screen 2 — Gmail Scanning (loading)</div>
+      <div class="mockup-body" style="background:#0F0D0C;padding:24px;color:#F7F2EC;text-align:center;border-radius:8px">
+        <div style="font-size:36px;margin-bottom:12px">📬</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px">Scanning your Gmail...</div>
+        <div style="font-size:11px;color:#8A7F76;margin-bottom:16px">Searching for financial emails</div>
+        <div style="text-align:left;background:#1a1816;border-radius:8px;padding:12px;font-size:11px">
+          <div style="color:#E8341A;margin-bottom:4px">✓ Shopping receipts (14 found)</div>
+          <div style="color:#E8341A;margin-bottom:4px">✓ Credit card alerts (8 found)</div>
+          <div style="color:#E8341A;margin-bottom:4px">✓ Subscriptions (6 found)</div>
+          <div style="color:#8A7F76;margin-bottom:4px">⟳ Auto payments...</div>
+          <div style="color:#8A7F76;margin-bottom:4px">⟳ Insurance...</div>
+          <div style="color:#8A7F76">⟳ Pending payments...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px">
+    <div class="mockup">
+      <div class="mockup-header">Screen 3 — Gmail Transactions Extracted (feeds into existing villain flow)</div>
+      <div class="mockup-body" style="background:white;padding:16px;border-radius:8px">
+        <div style="font-size:12px;font-weight:700;color:#0F0D0C;margin-bottom:8px">📧 Gmail Transactions — 38 found</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <tr style="background:#F7F2EC">
+            <th style="padding:6px;text-align:left;color:#8A7F76">Merchant</th>
+            <th style="padding:6px;text-align:left;color:#8A7F76">Amount</th>
+            <th style="padding:6px;text-align:left;color:#8A7F76">Category</th>
+            <th style="padding:6px;text-align:left;color:#8A7F76">Date</th>
+          </tr>
+          <tr style="border-bottom:1px solid #f0ece8">
+            <td style="padding:6px">Amazon</td>
+            <td style="padding:6px;color:#E8341A;font-weight:600">$67.34</td>
+            <td style="padding:6px"><span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:10px;font-size:10px">Shopping</span></td>
+            <td style="padding:6px;color:#8A7F76">Apr 2</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f0ece8">
+            <td style="padding:6px">Netflix</td>
+            <td style="padding:6px;color:#E8341A;font-weight:600">$15.49</td>
+            <td style="padding:6px"><span style="background:#ede9fe;color:#5b21b6;padding:2px 6px;border-radius:10px;font-size:10px">Subscription</span></td>
+            <td style="padding:6px;color:#8A7F76">Mar 20</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f0ece8">
+            <td style="padding:6px">Chase Visa</td>
+            <td style="padding:6px;color:#E8341A;font-weight:600">$234.00</td>
+            <td style="padding:6px"><span style="background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:10px;font-size:10px">Credit Card</span></td>
+            <td style="padding:6px;color:#8A7F76">Mar 18</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f0ece8">
+            <td style="padding:6px">Geico Insurance</td>
+            <td style="padding:6px;color:#E8341A;font-weight:600">$89.00</td>
+            <td style="padding:6px"><span style="background:#dcfce7;color:#166534;padding:2px 6px;border-radius:10px;font-size:10px">Insurance</span></td>
+            <td style="padding:6px;color:#8A7F76">Mar 15</td>
+          </tr>
+          <tr>
+            <td style="padding:6px">Autopay - Electric</td>
+            <td style="padding:6px;color:#E8341A;font-weight:600">$120.00</td>
+            <td style="padding:6px"><span style="background:#e0f2fe;color:#075985;padding:2px 6px;border-radius:10px;font-size:10px">Auto Payment</span></td>
+            <td style="padding:6px;color:#8A7F76">Mar 10</td>
+          </tr>
+        </table>
+        <div style="margin-top:10px;text-align:center">
+          <button style="background:#E8341A;color:white;border:none;padding:10px 20px;border-radius:6px;font-size:11px;font-weight:700">Analyze My Villain →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px">
+  <h3>🧾 Feature 2 — Smart Receipt Splitter</h3>
+
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Step 1 — Upload Receipt</div>
+      <div class="mockup-body" style="background:white;padding:20px;border-radius:8px;text-align:center">
+        <div style="border:2px dashed #E8341A;border-radius:12px;padding:24px;margin-bottom:12px">
+          <div style="font-size:32px;margin-bottom:8px">📸</div>
+          <div style="font-size:13px;font-weight:700;color:#0F0D0C;margin-bottom:4px">Drop receipt here</div>
+          <div style="font-size:11px;color:#8A7F76">JPG, PNG, or PDF</div>
+          <button style="margin-top:10px;background:#E8341A;color:white;border:none;padding:8px 16px;border-radius:6px;font-size:11px">Browse Files</button>
+        </div>
+        <div style="font-size:11px;color:#8A7F76">Extracting: restaurant bills, grocery receipts, hotel invoices, any expense</div>
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-header">Step 2 — OCR Results + Add People</div>
+      <div class="mockup-body" style="background:white;padding:16px;border-radius:8px">
+        <div style="font-size:12px;font-weight:700;color:#0F0D0C;margin-bottom:8px">🧾 Extracted Items</div>
+        <div style="font-size:11px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0ece8"><span>Margherita Pizza</span><span style="color:#E8341A">$18.00</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0ece8"><span>Caesar Salad</span><span style="color:#E8341A">$12.50</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0ece8"><span>2x Beer</span><span style="color:#E8341A">$14.00</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-weight:700"><span>Total (incl. tax)</span><span style="color:#E8341A">$51.29</span></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:#0F0D0C;margin-bottom:6px">👥 Who's splitting?</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <div style="background:#F7F2EC;border-radius:20px;padding:4px 10px;font-size:11px">You</div>
+          <div style="background:#F7F2EC;border-radius:20px;padding:4px 10px;font-size:11px">Alex ✕</div>
+          <div style="background:#F7F2EC;border-radius:20px;padding:4px 10px;font-size:11px">Sam ✕</div>
+          <div style="background:#E8341A;color:white;border-radius:20px;padding:4px 10px;font-size:11px">+ Add</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="split" style="margin-top:12px">
+    <div class="mockup">
+      <div class="mockup-header">Step 3 — Choose Split Mode</div>
+      <div class="mockup-body" style="background:white;padding:16px;border-radius:8px">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="border:2px solid #E8341A;border-radius:8px;padding:10px;font-size:11px">
+            <div style="font-weight:700;margin-bottom:2px">⚖️ Equal Split</div>
+            <div style="color:#8A7F76">$17.10 each (3 people)</div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;font-size:11px">
+            <div style="font-weight:700;margin-bottom:2px">🍕 By Item</div>
+            <div style="color:#8A7F76">Assign who had what</div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;font-size:11px">
+            <div style="font-weight:700;margin-bottom:2px">🤖 AI Split</div>
+            <div style="color:#8A7F76">Claude suggests based on items</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-header">Step 4 — Summary + Tracking</div>
+      <div class="mockup-body" style="background:white;padding:16px;border-radius:8px">
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px">💰 Who Owes What</div>
+        <div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:#F7F2EC;border-radius:8px;margin-bottom:6px">
+            <div>
+              <div style="font-size:12px;font-weight:600">Alex</div>
+              <div style="font-size:10px;color:#8A7F76">Pizza + 1 Beer</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:13px;font-weight:700;color:#E8341A">$25.00</div>
+              <button style="background:#dcfce7;color:#166534;border:none;padding:3px 8px;border-radius:10px;font-size:10px;cursor:pointer">Mark Paid ✓</button>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:#dcfce7;border-radius:8px;margin-bottom:6px;opacity:0.7">
+            <div>
+              <div style="font-size:12px;font-weight:600">Sam ✓</div>
+              <div style="font-size:10px;color:#8A7F76">Salad</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:13px;font-weight:700;color:#166534">$12.50 PAID</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:#fee2e2;border-radius:8px;padding:8px;font-size:11px;text-align:center">
+          <strong style="color:#991b1b">Still owed: $25.00</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

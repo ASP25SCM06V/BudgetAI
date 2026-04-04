@@ -1,0 +1,72 @@
+<h2>Updated Landing Page — Unified Consent Flow</h2>
+<p class="subtitle">User sees ONE connect button. Consent covers both Plaid + Gmail automatically.</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Option A — Consent inline on landing</div>
+    <div class="mockup-body" style="background:#0F0D0C;padding:28px;color:#F7F2EC;text-align:center;border-radius:8px;min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+      <div style="font-size:56px">💀</div>
+      <div>
+        <div style="font-family:sans-serif;font-size:26px;font-weight:800">SpendShame</div>
+        <div style="font-size:12px;color:#8A7F76;margin-top:4px">Your money has a villain. His name is you.</div>
+      </div>
+
+      <!-- Consent box -->
+      <div style="background:#1a1816;border:1px solid rgba(232,52,26,0.25);border-radius:10px;padding:14px;text-align:left;max-width:280px;font-size:11px;color:#8A7F76;line-height:1.6">
+        <div style="color:#F7F2EC;font-weight:600;margin-bottom:8px;font-size:12px">By continuing you allow SpendShame to:</div>
+        <div style="display:flex;gap:8px;margin-bottom:6px"><span style="color:#E8341A">✓</span><span>Connect your bank account and read transactions via Plaid</span></div>
+        <div style="display:flex;gap:8px;margin-bottom:6px"><span style="color:#E8341A">✓</span><span>Scan your Gmail for financial emails (receipts, subscriptions, card alerts, insurance, auto-payments)</span></div>
+        <div style="display:flex;gap:8px"><span style="color:#E8341A">✓</span><span>Analyze your spending with AI to assign your villain</span></div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(247,242,236,0.08);font-size:10px;color:#8A7F76">No data is stored permanently. Read-only access. Demo uses sample data only.</div>
+      </div>
+
+      <button style="background:#E8341A;color:white;border:none;padding:14px 32px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;width:100%;max-width:280px">
+        I Accept — Connect My Bank
+      </button>
+      <button style="background:transparent;border:1px solid rgba(247,242,236,0.15);color:#8A7F76;padding:10px;border-radius:8px;font-size:12px;width:100%;max-width:280px">
+        Try Demo Mode
+      </button>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Option B — Consent modal pops up on click</div>
+    <div class="mockup-body" style="background:#0F0D0C;padding:28px;color:#F7F2EC;text-align:center;border-radius:8px;min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+      <div style="font-size:56px">💀</div>
+      <div>
+        <div style="font-family:sans-serif;font-size:26px;font-weight:800">SpendShame</div>
+        <div style="font-size:12px;color:#8A7F76;margin-top:4px">Your money has a villain. His name is you.</div>
+      </div>
+
+      <button style="background:#E8341A;color:white;border:none;padding:14px 32px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;width:100%;max-width:280px">
+        Connect My Bank
+      </button>
+      <button style="background:transparent;border:1px solid rgba(247,242,236,0.15);color:#8A7F76;padding:10px;border-radius:8px;font-size:12px;width:100%;max-width:280px">
+        Try Demo Mode
+      </button>
+
+      <!-- Consent modal overlay -->
+      <div style="position:relative;width:100%;max-width:280px;margin-top:-8px">
+        <div style="background:#1a1816;border:1px solid rgba(232,52,26,0.4);border-radius:12px;padding:16px;text-align:left;font-size:11px;color:#8A7F76">
+          <div style="color:#F7F2EC;font-weight:700;font-size:13px;margin-bottom:10px">Before we begin 👀</div>
+          <div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start"><span style="color:#E8341A;margin-top:1px">✓</span><span>Bank read access via Plaid (secure, read-only)</span></div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-start"><span style="color:#E8341A;margin-top:1px">✓</span><span>Gmail financial email scan (receipts, bills, subscriptions, alerts)</span></div>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <button style="background:#E8341A;color:white;border:none;padding:8px 16px;border-radius:6px;font-size:11px;font-weight:700;flex:1">Accept & Continue</button>
+            <button style="background:transparent;border:1px solid rgba(247,242,236,0.2);color:#8A7F76;padding:8px 12px;border-radius:6px;font-size:11px;flex:0.5">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:16px">
+  <h3>After consent — what happens automatically</h3>
+  <div style="background:#f9fafb;border-radius:10px;padding:16px;font-size:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:#E8341A;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">1</span><span>Plaid Link popup opens → user connects bank</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:#E8341A;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">2</span><span>Google OAuth popup opens automatically → Gmail access granted</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:#E8341A;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">3</span><span>Both data sources run in parallel — Plaid transactions + Gmail emails</span></div>
+    <div style="display:flex;align-items:center;gap:10px"><span style="background:#E8341A;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">4</span><span>Combined results sent to Claude → villain assigned → reveal screen</span></div>
+  </div>
+</div>

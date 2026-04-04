@@ -14,9 +14,23 @@ export default function Landing() {
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
 
+  const demoVillain = {
+    villain_type: 'latte_phantom',
+    villain_name: 'The Latte Phantom',
+    villain_emoji: '☕',
+    villain_description: 'You haunt every coffee shop within a 2-mile radius, leaving a trail of empty cups and broken savings goals. Starbucks knows your order by heart — and so does your bank statement.',
+    signature_taunts: [
+      'You spent $22.60 at Starbucks in 3 days. A bag of beans costs $12 and lasts a month. Do the math... actually, please don\'t.',
+      'Uber Eats at 11pm again? Your future self is weeping into a cup of instant ramen.',
+      '$52 to Grubhub in one order? A personal chef would\'ve been cheaper. And classier.',
+    ],
+    worst_stat: 'You spent $169.05 on food delivery and coffee in 90 days — enough for 14 months of Netflix.',
+    hp: 100,
+  }
+
   const runFullFlow = async (transactions, isDemo = false) => {
     setStatus('Analyzing your spending sins...')
-    const villain = await analyzeTransactions(transactions)
+    const villain = isDemo ? demoVillain : await analyzeTransactions(transactions)
     setTransactions(transactions)
     setVillain(villain)
     setIsDemoMode(isDemo)

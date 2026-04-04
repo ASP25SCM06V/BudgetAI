@@ -6,7 +6,7 @@ import { getAdvice } from '../api/index.js'
 
 export default function RedemptionChat() {
   const navigate = useNavigate()
-  const { villain, transactions } = useApp()
+  const { villain, transactions, isDemoMode } = useApp()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -48,7 +48,19 @@ export default function RedemptionChat() {
     setMessages((prev) => [...prev, { role: 'user', text: userMsg }])
     setLoading(true)
     try {
-      const advice = await getAdvice(userMsg, txSummary, villain?.villain_type)
+      let advice
+      if (isDemoMode) {
+        await new Promise((r) => setTimeout(r, 800))
+        const demoReplies = [
+          `You spent $169 on food and coffee in 90 days. That's $676/year. Invest that at 7% for 10 years and you'd have $940. Instead you have Uber Eats regret.`,
+          `Cut Starbucks to twice a week and you save $780/year. That's not advice, that's arithmetic. Even you can do arithmetic.`,
+          `Your top merchant is Starbucks. Your second is Uber Eats. You are not in a financial crisis. You are in a lifestyle crisis.`,
+          `Start with one subscription cancellation. Pick the one you forgot you had. You know which one.`,
+        ]
+        advice = demoReplies[messages.length % demoReplies.length]
+      } else {
+        advice = await getAdvice(userMsg, txSummary, villain?.villain_type)
+      }
       setMessages((prev) => [...prev, { role: 'villain', text: advice }])
     } catch {
       setMessages((prev) => [

@@ -1,0 +1,51 @@
+<h2>Proposed Approach for Both Features</h2>
+<p class="subtitle">Review the technical approach — click to approve or flag concerns</p>
+
+<div class="section">
+  <h3>Feature 1 — Google Auth + Gmail Scanner</h3>
+  <div class="options">
+    <div class="option" data-choice="gmail-a" onclick="toggleSelect(this)">
+      <div class="letter">✅</div>
+      <div class="content">
+        <h3>Recommended: Google OAuth 2.0 + Gmail API</h3>
+        <p>User clicks "Sign in with Google" → Google OAuth popup → server exchanges code for tokens → Gmail API fetches last 90 days of emails matching financial patterns → Claude extracts merchant + amount + date from each → merged into transaction feed alongside Plaid.</p>
+        <ul>
+          <li><strong>Auth:</strong> <code>passport-google-oauth20</code> on Express, tokens stored in-memory</li>
+          <li><strong>Gmail scope:</strong> <code>gmail.readonly</code> — read only, no send</li>
+          <li><strong>Extraction:</strong> Claude Vision/text API reads email body → returns structured JSON</li>
+          <li><strong>Email filters:</strong> subject keywords — "order", "receipt", "payment", "charged", "invoice", "statement"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Feature 2 — Smart Receipt Splitter</h3>
+  <div class="options">
+    <div class="option" data-choice="split-a" onclick="toggleSelect(this)">
+      <div class="letter">✅</div>
+      <div class="content">
+        <h3>Recommended: Claude Vision OCR + In-Memory Split Tracking</h3>
+        <p>User uploads receipt image → sent to Claude claude-sonnet-4-20250514 with vision → returns structured line items + total → user enters group member names → picks split mode (equal / item-based / AI) → Claude calculates split → summary shown + stored in-memory with paid/unpaid tracking.</p>
+        <ul>
+          <li><strong>OCR:</strong> Claude Vision (no extra API key, handles messy receipts beautifully)</li>
+          <li><strong>Storage:</strong> In-memory splits map on server (hackathon scope) + localStorage backup on client</li>
+          <li><strong>Split modes:</strong> Equal (math), Item-based (user assigns items), AI (Claude recommends)</li>
+          <li><strong>Tracking:</strong> Mark members as paid, see running "still owed" total</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3 style="color:#E8341A">⚠️ What's NOT included (YAGNI)</h3>
+  <ul>
+    <li>No persistent database — in-memory only, fine for hackathon</li>
+    <li>No real payment links (Venmo/PayPal) — just amounts shown</li>
+    <li>No email notifications to split members</li>
+    <li>No multi-device sync</li>
+    <li>Gmail only scans financial emails — not full inbox</li>
+  </ul>
+</div>

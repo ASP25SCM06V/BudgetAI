@@ -8,9 +8,33 @@ import TransactionRoastItem from '../components/TransactionRoastItem.jsx'
 import VillainCardShare from '../components/VillainCardShare.jsx'
 import { roastTransaction } from '../api/index.js'
 
+const demoRoasts = [
+  "Starbucks three days in a row? Your barista has a name for your order. It's called 'the sad latte'.",
+  "Another Starbucks. The beans are free if you just... stop going.",
+  "Day three of Starbucks. Have you considered owning a coffee maker? Wild concept.",
+  "Uber Eats at dinner time — a classic cry for help wrapped in a delivery fee.",
+  "Uber Eats again. Your stove is literally right there. It doesn't bite.",
+  "DoorDash too? You're single-handedly funding three drivers' car payments.",
+  "Netflix, Spotify, AND Hulu? You're paying for three streaming services and still say you're bored.",
+  "Spotify Premium so you don't hear ads. The irony of spending money to avoid being reminded you spend money.",
+  "Hulu with ads would've saved you $6. That's two coffees. You'll spend them at Starbucks anyway.",
+  "Amazon Prime — for the privilege of buying things you didn't need, faster.",
+  "$67 at Amazon. Did you even need any of that? Asking for your future self.",
+  "Another Amazon order. Jeff Bezos thanks you personally.",
+  "$112 at Target. You went in for one thing. You always go in for one thing.",
+  "Walgreens impulse buy — the most expensive convenience on earth.",
+  "Chipotle. Respectable. Predictable. Still $14 for a burrito.",
+  "McDonald's at an undisclosed hour. No judgment. Some judgment.",
+  "Discord Nitro for animated emojis. The economy is fine.",
+  "Notion subscription — for the productivity system you set up once and never opened again.",
+  "$52 to Grubhub. That's a full week of groceries. I hope it was worth it.",
+  "Taco Bell at the end of the month. The financial cycle is complete.",
+]
+
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { villain, transactions, hp, setHp } = useApp()
+  const { villain, transactions, hp, setHp, isDemoMode } = useApp()
+
   const [roasts, setRoasts] = useState({})
   const [loadingRoasts, setLoadingRoasts] = useState(false)
   const [savingsGoal, setSavingsGoal] = useState('')
@@ -25,8 +49,18 @@ export default function Dashboard() {
 
   const loadRoasts = async () => {
     setLoadingRoasts(true)
-    const top20 = transactions.slice(0, 20)
 
+    if (isDemoMode) {
+      const preloaded = {}
+      transactions.slice(0, 20).forEach((_, i) => {
+        preloaded[i] = demoRoasts[i] || 'No comment. Even I have limits.'
+      })
+      setRoasts(preloaded)
+      setLoadingRoasts(false)
+      return
+    }
+
+    const top20 = transactions.slice(0, 20)
     for (let i = 0; i < top20.length; i += 5) {
       const batchRoasts = {}
       const batch = top20.slice(i, i + 5)
