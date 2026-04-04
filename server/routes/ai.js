@@ -18,6 +18,7 @@ router.post('/analyze', async (req, res) => {
 router.post('/roast', async (req, res) => {
   try {
     const { transaction, villain_type } = req.body
+    if (!transaction?.merchant_name) return res.status(400).json({ error: 'transaction is required' })
     const taunt = await roastTransaction(transaction, villain_type)
     res.json({ taunt })
   } catch (err) {
@@ -29,6 +30,7 @@ router.post('/roast', async (req, res) => {
 router.post('/advice', async (req, res) => {
   try {
     const { message, tx_summary, villain_type } = req.body
+    if (!message) return res.status(400).json({ error: 'message is required' })
     const advice = await getVillainAdvice(message, tx_summary, villain_type)
     res.json({ advice })
   } catch (err) {

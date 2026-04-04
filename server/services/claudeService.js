@@ -36,7 +36,7 @@ Return EXACTLY this JSON structure (no markdown):
     ],
   })
 
-  const raw = message.content[0].text.trim()
+  const raw = message.content[0].text.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
   return JSON.parse(raw)
 }
 
