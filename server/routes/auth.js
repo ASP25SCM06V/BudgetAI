@@ -28,10 +28,11 @@ router.get('/auth/google/callback', async (req, res) => {
   const { code, error } = req.query
 
   if (error || !code) {
+    const errMsg = JSON.stringify(error || 'No code returned')
     return res.send(`
       <html><body><script>
         window.opener && window.opener.postMessage(
-          { type: 'GMAIL_AUTH_ERROR', error: '${error || 'No code returned'}' },
+          { type: 'GMAIL_AUTH_ERROR', error: ${errMsg} },
           'http://localhost:5173'
         );
         window.close();
@@ -53,10 +54,11 @@ router.get('/auth/google/callback', async (req, res) => {
       </script></body></html>
     `)
   } catch (e) {
+    const errMsg = JSON.stringify(e.message || 'OAuth failed')
     res.send(`
       <html><body><script>
         window.opener && window.opener.postMessage(
-          { type: 'GMAIL_AUTH_ERROR', error: '${e.message.replace(/'/g, "\\'")}' },
+          { type: 'GMAIL_AUTH_ERROR', error: ${errMsg} },
           'http://localhost:5173'
         );
         window.close();
