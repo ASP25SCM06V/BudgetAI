@@ -26,21 +26,21 @@ export default function Dashboard() {
   const loadRoasts = async () => {
     setLoadingRoasts(true)
     const top20 = transactions.slice(0, 20)
-    const newRoasts = {}
 
     for (let i = 0; i < top20.length; i += 5) {
+      const batchRoasts = {}
       const batch = top20.slice(i, i + 5)
       await Promise.all(
         batch.map(async (tx, idx) => {
           try {
             const taunt = await roastTransaction(tx, villain.villain_type)
-            newRoasts[i + idx] = taunt
+            batchRoasts[i + idx] = taunt
           } catch {
-            newRoasts[i + idx] = 'Even I refuse to comment on this one.'
+            batchRoasts[i + idx] = 'Even I refuse to comment on this one.'
           }
         })
       )
-      setRoasts((prev) => ({ ...prev, ...newRoasts }))
+      setRoasts((prev) => ({ ...prev, ...batchRoasts }))
     }
     setLoadingRoasts(false)
   }
