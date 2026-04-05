@@ -7,28 +7,21 @@ import {
   createLinkToken,
   exchangeToken,
   fetchTransactions,
-  analyzeTransactions,
   fetchGmailTransactions,
+  computeHealthScore,
+  scanSubscriptions,
+  refreshInsights,
 } from '../api/index.js'
-import { demoTransactions } from '../data/demoData.js'
+import {
+  demoTransactions,
+  demoHealthScore,
+  demoSubscriptions,
+  demoBudgets,
+  demoCreditCards,
+  demoCreditStrategy,
+  demoInsights,
+} from '../data/demoData.js'
 
-const demoVillain = {
-  villain_type: 'latte_phantom',
-  villain_name: 'The Latte Phantom',
-  villain_emoji: '☕',
-  villain_description:
-    'You haunt every coffee shop within a 2-mile radius, leaving a trail of empty cups and broken savings goals. Starbucks knows your order by heart — and so does your bank statement.',
-  signature_taunts: [
-    "You spent $22.60 at Starbucks in 3 days. A bag of beans costs $12 and lasts a month. Do the math... actually, please don't.",
-    "Uber Eats at 11pm again? Your future self is weeping into a cup of instant ramen.",
-    "$52 to Grubhub in one order? A personal chef would've been cheaper. And classier.",
-  ],
-  worst_stat:
-    'You spent $169.05 on food delivery and coffee in 90 days — enough for 14 months of Netflix.',
-  hp: 100,
-}
-
-// Deduplication: remove Gmail transactions that match a Plaid transaction by merchant+amount+date
 function mergeAndDeduplicate(plaid, gmail) {
   const key = (t) => `${(t.merchant_name || '').toLowerCase()}|${t.amount}|${t.date}`
   const plaidKeys = new Set(plaid.map(key))
@@ -36,7 +29,6 @@ function mergeAndDeduplicate(plaid, gmail) {
   return [...plaid, ...unique]
 }
 
-// Opens Google OAuth popup and returns a Promise that resolves when auth completes
 function openGmailPopup() {
   return new Promise((resolve, reject) => {
     const popup = window.open(
@@ -44,25 +36,16 @@ function openGmailPopup() {
       'gmail_oauth',
       'width=500,height=620,top=100,left=100'
     )
-
-    if (!popup) {
-      reject(new Error('Popup blocked'))
-      return
-    }
+    if (!popup) { reject(new Error('Popup blocked')); return }
 
     const handler = (event) => {
       if (event.origin !== 'http://localhost:3001') return
       window.removeEventListener('message', handler)
-      if (event.data?.type === 'GMAIL_AUTH_SUCCESS') {
-        resolve()
-      } else {
-        reject(new Error(event.data?.error || 'Gmail auth failed'))
-      }
+      if (event.data?.type === 'GMAIL_AUTH_SUCCESS') resolve()
+      else reject(new Error(event.data?.error || 'Gmail auth failed'))
     }
-
     window.addEventListener('message', handler)
 
-    // Fallback: if popup is closed without postMessage
     const timer = setInterval(() => {
       if (popup.closed) {
         clearInterval(timer)
@@ -73,21 +56,37 @@ function openGmailPopup() {
   })
 }
 
+const features = [
+  { icon: '📊', label: 'Financial Health Score', desc: 'AI-computed 0-100 score updated daily' },
+  { icon: '✨', label: 'Aria AI Coach', desc: 'Ask anything — warm, specific, actionable' },
+  { icon: '🔄', label: 'Subscription Radar', desc: 'Find and cancel unused subscriptions' },
+  { icon: '🎯', label: 'Smart Budgets', desc: 'Category budgets with live progress' },
+  { icon: '💳', label: 'Credit Card Strategy', desc: 'Avalanche or snowball — Aria decides' },
+  { icon: '🧾', label: 'Receipt Splitter', desc: 'OCR-powered bill splitting in 5 steps' },
+]
+
 export default function Landing() {
   const navigate = useNavigate()
-  const { setTransactions, setVillain, setIsDemoMode } = useApp()
+  const {
+    setTransactions, setIsDemoMode,
+    setHealthScore, setInsights, setSubscriptions,
+    setBudgets, setCreditCards, setCreditStrategy,
+  } = useApp()
   const [linkToken, setLinkToken] = useState(null)
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
 
-  const runFullFlow = async (transactions, isDemo = false) => {
-    setStatus('Analyzing your spending sins...')
-    const villain = isDemo ? demoVillain : await analyzeTransactions(transactions)
-    setTransactions(transactions)
-    setVillain(villain)
-    setIsDemoMode(isDemo)
-    navigate('/reveal')
+  const handleDemoMode = () => {
+    setIsDemoMode(true)
+    setTransactions(demoTransactions)
+    setHealthScore(demoHealthScore)
+    setInsights(demoInsights)
+    setSubscriptions(demoSubscriptions)
+    setBudgets(demoBudgets)
+    setCreditCards(demoCreditCards)
+    setCreditStrategy(demoCreditStrategy)
+    navigate('/dashboard')
   }
 
   const handleConnectBank = async () => {
@@ -104,202 +103,164 @@ export default function Landing() {
     }
   }
 
-  const handleDemoMode = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      await runFullFlow(demoTransactions, true)
-    } catch (e) {
-      setError(e.message)
-      setLoading(false)
-    }
-  }
-
   const { open, ready } = usePlaidLink({
     token: linkToken,
     onSuccess: async (publicToken) => {
       try {
         setStatus('Connecting to bank...')
         await exchangeToken(publicToken)
-        setStatus('Fetching your shameful transactions...')
-        const plaidTransactions = await fetchTransactions()
+        setStatus('Fetching your transactions...')
+        const plaidTx = await fetchTransactions()
 
-        // Attempt Gmail OAuth in popup (auto-triggered, no extra button click)
-        let gmailTransactions = []
+        let gmailTx = []
         try {
-          setStatus('Connecting Gmail for deeper analysis...')
+          setStatus('Connecting Gmail...')
           await openGmailPopup()
           setStatus('Scanning financial emails...')
-          gmailTransactions = await fetchGmailTransactions()
+          gmailTx = await fetchGmailTransactions()
         } catch {
-          // Gmail denied / popup blocked / timed out — proceed with Plaid only
           setStatus('Gmail skipped — using bank data only')
-          await new Promise((r) => setTimeout(r, 1200))
+          await new Promise((r) => setTimeout(r, 1000))
         }
 
-        const merged = mergeAndDeduplicate(plaidTransactions, gmailTransactions)
-        await runFullFlow(merged, false)
+        const merged = mergeAndDeduplicate(plaidTx, gmailTx)
+        setTransactions(merged)
+        setIsDemoMode(false)
+
+        setStatus('Computing your health score...')
+        const [hs, subs, insights] = await Promise.all([
+          computeHealthScore(merged).catch(() => null),
+          scanSubscriptions(merged).catch(() => []),
+          refreshInsights(merged).catch(() => []),
+        ])
+
+        if (hs) setHealthScore(hs)
+        setSubscriptions(subs)
+        setInsights(insights)
+        navigate('/dashboard')
       } catch (e) {
         setError(e.message)
         setLoading(false)
         setStatus('')
       }
     },
-    onExit: () => {
-      setLoading(false)
-      setStatus('')
-      setLinkToken(null)
-    },
+    onExit: () => { setLoading(false); setStatus(''); setLinkToken(null) },
   })
 
-  useEffect(() => {
-    if (linkToken && ready) {
-      open()
-    }
-  }, [linkToken, ready, open])
+  useEffect(() => { if (linkToken && ready) open() }, [linkToken, ready, open])
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
-      style={{ background: 'var(--dark)' }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="flex flex-col items-center gap-6 max-w-lg w-full"
-      >
-        <motion.p
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          style={{ fontSize: 72, lineHeight: 1 }}
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      {/* Hero */}
+      <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col items-center gap-6 max-w-lg w-full"
         >
-          💀
-        </motion.p>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            style={{
+              width: 72, height: 72, borderRadius: 20,
+              background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 36,
+            }}
+          >
+            ✨
+          </motion.div>
 
-        <div>
-          <h1
-            style={{
-              fontFamily: 'Syne',
-              fontSize: 'clamp(48px, 10vw, 80px)',
-              fontWeight: 800,
-              color: 'var(--cream)',
-              lineHeight: 1,
-            }}
-          >
-            SpendShame
-          </h1>
-          <p
-            style={{
-              fontFamily: 'DM Sans',
-              fontSize: 18,
-              color: 'var(--muted)',
-              fontWeight: 300,
-              marginTop: 12,
-            }}
-          >
-            Your money has a villain.{' '}
-            <span style={{ color: '#E8341A', fontWeight: 500 }}>His name is you.</span>
-          </p>
-        </div>
+          <div>
+            <h1 style={{
+              fontFamily: 'Syne', fontSize: 'clamp(48px, 10vw, 72px)',
+              fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1,
+            }}>
+              Budget<span style={{ color: 'var(--accent-primary)' }}>AI</span>
+            </h1>
+            <p style={{
+              fontFamily: 'DM Sans', fontSize: 18,
+              color: 'var(--text-secondary)', fontWeight: 300, marginTop: 12,
+            }}>
+              Your money, understood.
+            </p>
+          </div>
 
-        {/* Inline consent block */}
-        <div
-          style={{
-            background: '#1a1816',
-            border: '1px solid rgba(232,52,26,0.25)',
-            borderRadius: 10,
-            padding: '14px 16px',
-            textAlign: 'left',
-            width: '100%',
-            maxWidth: 320,
-            fontSize: 11,
-            color: 'var(--muted)',
-            lineHeight: 1.6,
-          }}
-        >
-          <p
-            style={{
-              color: 'var(--cream)',
-              fontWeight: 600,
-              marginBottom: 8,
-              fontSize: 12,
-              fontFamily: 'DM Sans',
-            }}
-          >
-            By continuing you allow SpendShame to:
+          {/* Consent block */}
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 12, padding: '16px 18px',
+            textAlign: 'left', width: '100%', maxWidth: 340,
+            fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7,
+          }}>
+            <p style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: 8, fontSize: 13, fontFamily: 'DM Sans' }}>
+              By continuing you allow BudgetAI to:
+            </p>
+            {[
+              'Read bank transactions securely via Plaid',
+              'Scan Gmail for financial emails (receipts, subscriptions, alerts)',
+              'Analyze your spending with AI to build your financial health score',
+            ].map((item) => (
+              <div key={item} style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'flex-start' }}>
+                <span style={{ color: 'var(--positive)', flexShrink: 0 }}>✓</span>
+                <span style={{ fontFamily: 'DM Sans' }}>{item}</span>
+              </div>
+            ))}
+            <p style={{
+              marginTop: 10, paddingTop: 10,
+              borderTop: '1px solid var(--border)',
+              fontSize: 10, fontFamily: 'DM Sans', color: 'var(--text-muted)',
+            }}>
+              No data stored permanently. Read-only access.
+            </p>
+          </div>
+
+          {error && <p style={{ color: 'var(--danger)', fontFamily: 'DM Sans', fontSize: 14 }}>{error}</p>}
+          {status && !error && <p style={{ color: 'var(--text-muted)', fontFamily: 'DM Sans', fontSize: 14 }}>{status}</p>}
+
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <button className="btn-accent" onClick={handleConnectBank} disabled={loading}
+              style={{ padding: '14px 32px', fontSize: 14 }}>
+              {loading ? 'Connecting...' : 'Connect My Bank \u2192 Get Your Score'}
+            </button>
+            <button className="btn-ghost" onClick={handleDemoMode} disabled={loading}>
+              Try Demo Mode
+            </button>
+          </div>
+
+          <p style={{ fontFamily: 'DM Sans', fontSize: 12, color: 'var(--text-muted)', opacity: 0.6 }}>
+            Plaid Sandbox + Gmail read-only · No real data stored
           </p>
-          {[
-            'Connect your bank account and read transactions via Plaid',
-            'Scan your Gmail for financial emails (receipts, subscriptions, card alerts, insurance, auto-payments)',
-            'Analyze your spending with AI to assign your villain',
-          ].map((item) => (
-            <div
-              key={item}
-              style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'flex-start' }}
+        </motion.div>
+      </div>
+
+      {/* Features grid */}
+      <div style={{ padding: '60px 24px', maxWidth: 900, margin: '0 auto' }}>
+        <h2 style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 28, color: 'var(--text-primary)', textAlign: 'center', marginBottom: 40 }}>
+          Smarter than Rocket Money
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+          {features.map((f, i) => (
+            <motion.div
+              key={f.label}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              viewport={{ once: true }}
+              className="surface"
             >
-              <span style={{ color: '#E8341A', flexShrink: 0 }}>✓</span>
-              <span style={{ fontFamily: 'DM Sans' }}>{item}</span>
-            </div>
+              <span style={{ fontSize: 28 }}>{f.icon}</span>
+              <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginTop: 10, marginBottom: 4 }}>
+                {f.label}
+              </p>
+              <p style={{ fontFamily: 'DM Sans', fontSize: 13, color: 'var(--text-secondary)' }}>{f.desc}</p>
+            </motion.div>
           ))}
-          <p
-            style={{
-              marginTop: 10,
-              paddingTop: 10,
-              borderTop: '1px solid rgba(247,242,236,0.08)',
-              fontSize: 10,
-              fontFamily: 'DM Sans',
-            }}
-          >
-            No data stored permanently. Read-only access.
-          </p>
         </div>
-
-        {error && (
-          <p style={{ color: '#E8341A', fontFamily: 'DM Sans', fontSize: 14 }}>{error}</p>
-        )}
-
-        {status && !error && (
-          <p style={{ color: 'var(--muted)', fontFamily: 'DM Sans', fontSize: 14 }}>{status}</p>
-        )}
-
-        <div className="flex flex-col gap-3 w-full max-w-xs">
-          <button className="btn-primary" onClick={handleConnectBank} disabled={loading}>
-            {loading ? 'Connecting...' : 'I Accept — Connect My Bank'}
-          </button>
-
-          <button
-            onClick={handleDemoMode}
-            disabled={loading}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(247,242,236,0.2)',
-              color: 'var(--muted)',
-              fontFamily: 'DM Sans',
-              fontSize: 14,
-              padding: '12px 24px',
-              borderRadius: 8,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.45 : 1,
-              transition: 'border-color 0.15s',
-            }}
-          >
-            Try Demo Mode
-          </button>
-        </div>
-
-        <p
-          style={{
-            fontFamily: 'DM Sans',
-            fontSize: 12,
-            color: 'var(--muted)',
-            opacity: 0.5,
-          }}
-        >
-          Plaid Sandbox + Gmail read-only • No real data stored
-        </p>
-      </motion.div>
+      </div>
     </div>
   )
 }

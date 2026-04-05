@@ -1,259 +1,201 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useApp } from '../context/AppContext.jsx'
-import HPBar from '../components/HPBar.jsx'
+import HealthScoreBadge from '../components/HealthScoreBadge.jsx'
+import BudgetBar from '../components/BudgetBar.jsx'
+import InsightCard from '../components/InsightCard.jsx'
+import SkeletonCard from '../components/SkeletonCard.jsx'
 import SpendChart from '../components/SpendChart.jsx'
-import TransactionRoastItem from '../components/TransactionRoastItem.jsx'
-import VillainCardShare from '../components/VillainCardShare.jsx'
-import { roastTransaction } from '../api/index.js'
-
-const demoRoasts = [
-  "Starbucks three days in a row? Your barista has a name for your order. It's called 'the sad latte'.",
-  "Another Starbucks. The beans are free if you just... stop going.",
-  "Day three of Starbucks. Have you considered owning a coffee maker? Wild concept.",
-  "Uber Eats at dinner time — a classic cry for help wrapped in a delivery fee.",
-  "Uber Eats again. Your stove is literally right there. It doesn't bite.",
-  "DoorDash too? You're single-handedly funding three drivers' car payments.",
-  "Netflix, Spotify, AND Hulu? You're paying for three streaming services and still say you're bored.",
-  "Spotify Premium so you don't hear ads. The irony of spending money to avoid being reminded you spend money.",
-  "Hulu with ads would've saved you $6. That's two coffees. You'll spend them at Starbucks anyway.",
-  "Amazon Prime — for the privilege of buying things you didn't need, faster.",
-  "$67 at Amazon. Did you even need any of that? Asking for your future self.",
-  "Another Amazon order. Jeff Bezos thanks you personally.",
-  "$112 at Target. You went in for one thing. You always go in for one thing.",
-  "Walgreens impulse buy — the most expensive convenience on earth.",
-  "Chipotle. Respectable. Predictable. Still $14 for a burrito.",
-  "McDonald's at an undisclosed hour. No judgment. Some judgment.",
-  "Discord Nitro for animated emojis. The economy is fine.",
-  "Notion subscription — for the productivity system you set up once and never opened again.",
-  "$52 to Grubhub. That's a full week of groceries. I hope it was worth it.",
-  "Taco Bell at the end of the month. The financial cycle is complete.",
-]
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { villain, transactions, hp, setHp, isDemoMode } = useApp()
-
-  const [roasts, setRoasts] = useState({})
-  const [loadingRoasts, setLoadingRoasts] = useState(false)
-  const [savingsGoal, setSavingsGoal] = useState('')
-  const [dealDamageAnim, setDealDamageAnim] = useState(false)
-  const [defeated, setDefeated] = useState(false)
-  const [showShare, setShowShare] = useState(false)
+  const {
+    transactions, healthScore, insights, setInsights,
+    subscriptions, budgets, creditCards, creditStrategy,
+    isDemoMode, addToast,
+  } = useApp()
 
   useEffect(() => {
-    if (!villain || !transactions.length) return
-    loadRoasts()
-  }, [villain, transactions])
-
-  const loadRoasts = async () => {
-    setLoadingRoasts(true)
-
-    if (isDemoMode) {
-      const preloaded = {}
-      transactions.slice(0, 20).forEach((_, i) => {
-        preloaded[i] = demoRoasts[i] || 'No comment. Even I have limits.'
-      })
-      setRoasts(preloaded)
-      setLoadingRoasts(false)
-      return
+    if (!transactions.length && !isDemoMode) {
+      navigate('/')
     }
+  }, [transactions, isDemoMode, navigate])
 
-    const top20 = transactions.slice(0, 20)
-    for (let i = 0; i < top20.length; i += 5) {
-      const batchRoasts = {}
-      const batch = top20.slice(i, i + 5)
-      await Promise.all(
-        batch.map(async (tx, idx) => {
-          try {
-            const taunt = await roastTransaction(tx, villain.villain_type)
-            batchRoasts[i + idx] = taunt
-          } catch {
-            batchRoasts[i + idx] = 'Even I refuse to comment on this one.'
-          }
-        })
-      )
-      setRoasts((prev) => ({ ...prev, ...batchRoasts }))
-    }
-    setLoadingRoasts(false)
+  const unusedSubs = subscriptions.filter((s) => s.status === 'unused')
+  const overBudgets = budgets.filter((b) => b.spent > b.limit)
+  const totalSpend = transactions.reduce((sum, t) => sum + (t.amount || 0), 0)
+  const totalSubCost = subscriptions
+    .filter((s) => s.status !== 'cancelled')
+    .reduce((sum, s) => sum + s.amount, 0)
+
+  const dismissInsight = (id) => {
+    setInsights((prev) => prev.filter((i) => i.id !== id))
+    addToast('Insight dismissed', 'info')
   }
 
-  const dealDamage = () => {
-    const goal = parseFloat(savingsGoal)
-    if (!goal || goal <= 0) return
-    const damage = Math.min(hp, Math.round((goal / 500) * 25))
-    setDealDamageAnim(true)
-    setTimeout(() => {
-      setHp((prev) => {
-        const newHp = Math.max(0, prev - damage)
-        if (newHp === 0) setDefeated(true)
-        return newHp
-      })
-      setDealDamageAnim(false)
-    }, 400)
-    setSavingsGoal('')
-  }
-
-  if (!villain) {
-    navigate('/')
-    return null
-  }
-
-  const top20 = transactions.slice(0, 20)
+  const statCards = [
+    {
+      label: 'Total Spend (90d)',
+      value: `$${totalSpend.toFixed(0)}`,
+      icon: '💸',
+      color: 'var(--danger)',
+      sub: `${transactions.length} transactions`,
+      action: null,
+    },
+    {
+      label: 'Monthly Subscriptions',
+      value: `$${totalSubCost.toFixed(0)}/mo`,
+      icon: '🔄',
+      color: 'var(--warning)',
+      sub: unusedSubs.length > 0 ? `${unusedSubs.length} unused` : 'All active',
+      action: unusedSubs.length > 0 ? () => navigate('/subscriptions') : null,
+    },
+    {
+      label: 'Budgets On Track',
+      value: `${budgets.length - overBudgets.length}/${budgets.length || '—'}`,
+      icon: '🎯',
+      color: overBudgets.length > 0 ? 'var(--warning)' : 'var(--positive)',
+      sub: overBudgets.length > 0 ? `${overBudgets.length} over budget` : 'Great work!',
+      action: overBudgets.length > 0 ? () => navigate('/budgets') : null,
+    },
+    {
+      label: 'Credit Cards',
+      value: creditCards.length > 0 ? `${creditCards.length} cards` : '—',
+      icon: '💳',
+      color: 'var(--accent-primary)',
+      sub: creditStrategy ? `${creditStrategy.strategy} recommended` : 'Add your cards',
+      action: () => navigate('/credit-cards'),
+    },
+  ]
 
   return (
-    <div className="min-h-screen px-4 py-8" style={{ background: 'var(--dark)' }}>
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div style={{ background: 'var(--bg-primary)', minHeight: '100vh', paddingBottom: 80 }}>
+      <div className="md:pl-[220px]">
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
 
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 24, color: 'var(--cream)' }}>
-            Shame Dashboard
-          </h1>
-          <button
-            onClick={() => setShowShare(true)}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(247,242,236,0.15)',
-              color: 'var(--muted)',
-              fontFamily: 'DM Sans',
-              fontSize: 12,
-              padding: '8px 14px',
-              borderRadius: 6,
-              cursor: 'pointer',
-            }}
-          >
-            Share Card
-          </button>
-        </div>
-
-        {/* Villain HP card */}
-        <div className="card">
-          <div className="flex items-center gap-4 mb-4">
-            <span style={{ fontSize: 40 }}>{villain.villain_emoji}</span>
-            <div>
-              <p style={{ fontFamily: 'DM Sans', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted)' }}>
-                Current Villain
-              </p>
-              <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 18, color: 'var(--dark)' }}>
-                {villain.villain_name}
-              </p>
-            </div>
+          {/* Header */}
+          <div style={{ marginBottom: 28 }}>
+            <h1 style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 28, color: 'var(--text-primary)' }}>
+              Dashboard
+            </h1>
+            {isDemoMode && (
+              <span style={{
+                display: 'inline-block', marginTop: 6,
+                background: 'rgba(99,102,241,0.15)', color: 'var(--accent-primary)',
+                fontFamily: 'DM Sans', fontSize: 11, fontWeight: 700,
+                padding: '3px 10px', borderRadius: 99, letterSpacing: '0.05em',
+              }}>DEMO MODE</span>
+            )}
           </div>
-          <HPBar hp={hp} />
-          <p style={{ fontFamily: 'DM Sans', fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
-            {villain.worst_stat}
-          </p>
-        </div>
 
-        {/* Defeat animation */}
-        <AnimatePresence>
-          {defeated && (
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="card text-center"
-              style={{ border: '1px solid #E8341A' }}
-            >
-              <p style={{ fontSize: 48 }}>🏆</p>
-              <h2 style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 20, color: 'var(--dark)', marginTop: 8 }}>
-                You defeated {villain.villain_name}!
-              </h2>
-              <p style={{ fontFamily: 'DM Sans', fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>
-                Financial discipline: 1. Villain: 0.
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          {/* Health Score */}
+          <div className="surface" style={{ marginBottom: 20 }}>
+            {healthScore ? (
+              <HealthScoreBadge healthScore={healthScore} size="lg" />
+            ) : (
+              <SkeletonCard height={90} />
+            )}
+          </div>
 
-        {/* Savings goal / Deal Damage */}
-        {!defeated && (
-          <div className="card">
-            <h3 style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, color: 'var(--dark)', marginBottom: 8 }}>
-              Deal Damage
-            </h3>
-            <p style={{ fontFamily: 'DM Sans', fontSize: 13, color: 'var(--muted)', marginBottom: 12 }}>
-              Set a monthly savings goal to damage your villain.
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder="e.g. 200"
-                value={savingsGoal}
-                onChange={(e) => setSavingsGoal(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && dealDamage()}
-                style={{
-                  flex: 1,
-                  padding: '10px 14px',
-                  borderRadius: 8,
-                  border: '0.5px solid rgba(15,13,12,0.2)',
-                  fontFamily: 'DM Sans',
-                  fontSize: 14,
-                  color: 'var(--dark)',
-                  outline: 'none',
-                }}
-              />
-              <motion.button
-                className="btn-primary"
-                onClick={dealDamage}
-                animate={dealDamageAnim ? { scale: [1, 0.9, 1.1, 1] } : {}}
-                transition={{ duration: 0.3 }}
-                style={{ fontSize: 13, padding: '10px 20px' }}
+          {/* Stat cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+            {statCards.map((card, i) => (
+              <motion.div
+                key={card.label}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07 }}
+                className="surface"
+                onClick={card.action || undefined}
+                style={{ cursor: card.action ? 'pointer' : 'default' }}
               >
-                Deal Damage ⚔️
-              </motion.button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <span style={{ fontSize: 22 }}>{card.icon}</span>
+                  {card.action && (
+                    <span style={{ fontSize: 11, color: 'var(--accent-primary)', fontFamily: 'DM Sans' }}>View →</span>
+                  )}
+                </div>
+                <p style={{ fontFamily: 'DM Sans', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                  {card.label}
+                </p>
+                <p style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 22, color: card.color }}>
+                  {card.value}
+                </p>
+                <p style={{ fontFamily: 'DM Sans', fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+                  {card.sub}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Insights + Budgets */}
+          <div style={{ display: 'grid', gap: 16, marginBottom: 20 }} className="md:grid-cols-2">
+
+            {/* Insights */}
+            <div>
+              <h2 style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', marginBottom: 12 }}>
+                Aria's Insights
+              </h2>
+              {insights.length === 0 && (
+                <div className="surface" style={{ color: 'var(--text-muted)', fontFamily: 'DM Sans', fontSize: 13, textAlign: 'center', padding: 24 }}>
+                  {isDemoMode ? 'No insights to show.' : 'Connect your bank to get AI insights.'}
+                </div>
+              )}
+              <AnimatePresence>
+                {insights.map((insight) => (
+                  <InsightCard key={insight.id} insight={insight} onDismiss={dismissInsight} />
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {/* Budget Bars */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h2 style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
+                  Budgets
+                </h2>
+                <button
+                  onClick={() => navigate('/budgets')}
+                  style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontFamily: 'DM Sans', fontSize: 12, cursor: 'pointer' }}
+                >
+                  Manage →
+                </button>
+              </div>
+              <div className="surface">
+                {budgets.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontFamily: 'DM Sans', fontSize: 13, textAlign: 'center', padding: '8px 0' }}>
+                    No budgets set.{' '}
+                    <span style={{ color: 'var(--accent-primary)', cursor: 'pointer' }} onClick={() => navigate('/budgets')}>
+                      Set one →
+                    </span>
+                  </p>
+                ) : (
+                  budgets.map((b) => <BudgetBar key={b.id} budget={b} />)
+                )}
+              </div>
             </div>
           </div>
-        )}
 
-        {/* Spend Chart */}
-        {transactions.length > 0 && <SpendChart transactions={transactions} />}
+          {/* Spend chart */}
+          {transactions.length > 0 && (
+            <div className="surface" style={{ marginBottom: 20 }}>
+              <h2 style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', marginBottom: 16 }}>
+                Spending by Category
+              </h2>
+              <SpendChart transactions={transactions} />
+            </div>
+          )}
 
-        {/* Transaction Roast Feed */}
-        <div>
-          <h3 style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, color: 'var(--cream)', marginBottom: 12 }}>
-            Transaction Roast Feed{loadingRoasts ? ' (loading taunts...)' : ''}
-          </h3>
-          {top20.map((tx, i) => (
-            <TransactionRoastItem key={i} transaction={tx} taunt={roasts[i]} />
-          ))}
-        </div>
+          {/* Quick Actions */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button className="btn-accent" onClick={() => navigate('/coach')}>Ask Aria ✨</button>
+            <button className="btn-ghost" onClick={() => navigate('/split')}>Split a Receipt 🧾</button>
+            <button className="btn-ghost" onClick={() => navigate('/subscriptions')}>Subscription Radar 🔄</button>
+          </div>
 
-        {/* Action buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
-          <button
-            className="btn-primary"
-            onClick={() => navigate('/chat')}
-          >
-            Ask for Help (If You Dare)
-          </button>
-          <button
-            onClick={() => navigate('/split')}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(232,52,26,0.4)',
-              color: '#E8341A',
-              fontFamily: 'DM Sans',
-              fontWeight: 700,
-              fontSize: 14,
-              padding: '12px 24px',
-              borderRadius: 8,
-              cursor: 'pointer',
-              letterSpacing: '0.04em',
-              transition: 'border-color 0.15s',
-            }}
-          >
-            Split a Receipt 🧾
-          </button>
         </div>
       </div>
-
-      <AnimatePresence>
-        {showShare && (
-          <VillainCardShare villain={villain} onClose={() => setShowShare(false)} />
-        )}
-      </AnimatePresence>
     </div>
   )
 }
