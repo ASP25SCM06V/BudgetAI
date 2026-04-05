@@ -220,14 +220,33 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Ask for Help */}
-        <button
-          className="btn-primary"
-          onClick={() => navigate('/chat')}
-          style={{ marginBottom: 32 }}
-        >
-          Ask for Help (If You Dare)
-        </button>
+        {/* Action buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/chat')}
+          >
+            Ask for Help (If You Dare)
+          </button>
+          <button
+            onClick={() => navigate('/split')}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(232,52,26,0.4)',
+              color: '#E8341A',
+              fontFamily: 'DM Sans',
+              fontWeight: 700,
+              fontSize: 14,
+              padding: '12px 24px',
+              borderRadius: 8,
+              cursor: 'pointer',
+              letterSpacing: '0.04em',
+              transition: 'border-color 0.15s',
+            }}
+          >
+            Split a Receipt 🧾
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>

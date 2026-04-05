@@ -57,3 +57,58 @@ export async function getAdvice(message, tx_summary, villain_type) {
   if (!res.ok) throw new Error(data.error || 'Failed to get advice')
   return data.advice
 }
+
+// --- Gmail ---
+
+export async function fetchGmailTransactions() {
+  const res = await fetch(`${BASE}/gmail/transactions`, { method: 'POST' })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch Gmail transactions')
+  return data.transactions
+}
+
+// --- Receipt Splitter ---
+
+export async function splitExtract(base64Image, mediaType = 'image/jpeg') {
+  const res = await fetch(`${BASE}/split/extract`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ base64Image, mediaType }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to extract receipt')
+  return data
+}
+
+export async function splitCalculate(items, people, mode) {
+  const res = await fetch(`${BASE}/split/calculate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items, people, mode }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to calculate split')
+  return data.splits
+}
+
+export async function splitSave(splitData) {
+  const res = await fetch(`${BASE}/split/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(splitData),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to save split')
+  return data.splitId
+}
+
+export async function splitPay(splitId, person) {
+  const res = await fetch(`${BASE}/split/${splitId}/pay`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ person }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to mark paid')
+  return data
+}
