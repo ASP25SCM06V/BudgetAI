@@ -48,19 +48,27 @@ router.post('/split/save', (req, res, next) => {
 })
 
 // GET /api/split/:id — fetch split by ID
-router.get('/split/:id', (req, res) => {
-  const split = getSplit(req.params.id)
-  if (!split) return res.status(404).json({ error: 'Split not found' })
-  res.json(split)
+router.get('/split/:id', (req, res, next) => {
+  try {
+    const split = getSplit(req.params.id)
+    if (!split) return res.status(404).json({ error: 'Split not found' })
+    res.json(split)
+  } catch (e) {
+    next(e)
+  }
 })
 
 // PATCH /api/split/:id/pay — mark a person as paid
-router.patch('/split/:id/pay', (req, res) => {
-  const { person } = req.body
-  if (!person) return res.status(400).json({ error: 'person is required' })
-  const split = markPersonPaid(req.params.id, person)
-  if (!split) return res.status(404).json({ error: 'Split not found' })
-  res.json(split)
+router.patch('/split/:id/pay', (req, res, next) => {
+  try {
+    const { person } = req.body
+    if (!person) return res.status(400).json({ error: 'person is required' })
+    const split = markPersonPaid(req.params.id, person)
+    if (!split) return res.status(404).json({ error: 'Split not found' })
+    res.json(split)
+  } catch (e) {
+    next(e)
+  }
 })
 
 export default router
