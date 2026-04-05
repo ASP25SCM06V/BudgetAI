@@ -3,8 +3,75 @@ import { useNavigate } from 'react-router-dom'
 import { usePlaidLink } from 'react-plaid-link'
 import { motion } from 'framer-motion'
 import { useApp } from '../context/AppContext.jsx'
-import { createLinkToken, exchangeToken, fetchTransactions, analyzeTransactions } from '../api/index.js'
+import {
+  createLinkToken,
+  exchangeToken,
+  fetchTransactions,
+  analyzeTransactions,
+  fetchGmailTransactions,
+} from '../api/index.js'
 import { demoTransactions } from '../data/demoData.js'
+
+const demoVillain = {
+  villain_type: 'latte_phantom',
+  villain_name: 'The Latte Phantom',
+  villain_emoji: '☕',
+  villain_description:
+    'You haunt every coffee shop within a 2-mile radius, leaving a trail of empty cups and broken savings goals. Starbucks knows your order by heart — and so does your bank statement.',
+  signature_taunts: [
+    "You spent $22.60 at Starbucks in 3 days. A bag of beans costs $12 and lasts a month. Do the math... actually, please don't.",
+    "Uber Eats at 11pm again? Your future self is weeping into a cup of instant ramen.",
+    "$52 to Grubhub in one order? A personal chef would've been cheaper. And classier.",
+  ],
+  worst_stat:
+    'You spent $169.05 on food delivery and coffee in 90 days — enough for 14 months of Netflix.',
+  hp: 100,
+}
+
+// Deduplication: remove Gmail transactions that match a Plaid transaction by merchant+amount+date
+function mergeAndDeduplicate(plaid, gmail) {
+  const key = (t) => `${(t.merchant_name || '').toLowerCase()}|${t.amount}|${t.date}`
+  const plaidKeys = new Set(plaid.map(key))
+  const unique = gmail.filter((t) => !plaidKeys.has(key(t)))
+  return [...plaid, ...unique]
+}
+
+// Opens Google OAuth popup and returns a Promise that resolves when auth completes
+function openGmailPopup() {
+  return new Promise((resolve, reject) => {
+    const popup = window.open(
+      'http://localhost:3001/api/auth/google',
+      'gmail_oauth',
+      'width=500,height=620,top=100,left=100'
+    )
+
+    if (!popup) {
+      reject(new Error('Popup blocked'))
+      return
+    }
+
+    const handler = (event) => {
+      if (event.origin !== 'http://localhost:3001') return
+      window.removeEventListener('message', handler)
+      if (event.data?.type === 'GMAIL_AUTH_SUCCESS') {
+        resolve()
+      } else {
+        reject(new Error(event.data?.error || 'Gmail auth failed'))
+      }
+    }
+
+    window.addEventListener('message', handler)
+
+    // Fallback: if popup is closed without postMessage
+    const timer = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(timer)
+        window.removeEventListener('message', handler)
+        reject(new Error('Popup closed'))
+      }
+    }, 500)
+  })
+}
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -13,20 +80,6 @@ export default function Landing() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
-
-  const demoVillain = {
-    villain_type: 'latte_phantom',
-    villain_name: 'The Latte Phantom',
-    villain_emoji: '☕',
-    villain_description: 'You haunt every coffee shop within a 2-mile radius, leaving a trail of empty cups and broken savings goals. Starbucks knows your order by heart — and so does your bank statement.',
-    signature_taunts: [
-      'You spent $22.60 at Starbucks in 3 days. A bag of beans costs $12 and lasts a month. Do the math... actually, please don\'t.',
-      'Uber Eats at 11pm again? Your future self is weeping into a cup of instant ramen.',
-      '$52 to Grubhub in one order? A personal chef would\'ve been cheaper. And classier.',
-    ],
-    worst_stat: 'You spent $169.05 on food delivery and coffee in 90 days — enough for 14 months of Netflix.',
-    hp: 100,
-  }
 
   const runFullFlow = async (transactions, isDemo = false) => {
     setStatus('Analyzing your spending sins...')
@@ -69,8 +122,23 @@ export default function Landing() {
         setStatus('Connecting to bank...')
         await exchangeToken(publicToken)
         setStatus('Fetching your shameful transactions...')
-        const transactions = await fetchTransactions()
-        await runFullFlow(transactions, false)
+        const plaidTransactions = await fetchTransactions()
+
+        // Attempt Gmail OAuth in popup (auto-triggered, no extra button click)
+        let gmailTransactions = []
+        try {
+          setStatus('Connecting Gmail for deeper analysis...')
+          await openGmailPopup()
+          setStatus('Scanning financial emails...')
+          gmailTransactions = await fetchGmailTransactions()
+        } catch {
+          // Gmail denied / popup blocked / timed out — proceed with Plaid only
+          setStatus('Gmail skipped — using bank data only')
+          await new Promise((r) => setTimeout(r, 1200))
+        }
+
+        const merged = mergeAndDeduplicate(plaidTransactions, gmailTransactions)
+        await runFullFlow(merged, false)
       } catch (e) {
         setError(e.message)
         setLoading(false)
@@ -136,6 +204,58 @@ export default function Landing() {
           </p>
         </div>
 
+        {/* Inline consent block */}
+        <div
+          style={{
+            background: '#1a1816',
+            border: '1px solid rgba(232,52,26,0.25)',
+            borderRadius: 10,
+            padding: '14px 16px',
+            textAlign: 'left',
+            width: '100%',
+            maxWidth: 320,
+            fontSize: 11,
+            color: 'var(--muted)',
+            lineHeight: 1.6,
+          }}
+        >
+          <p
+            style={{
+              color: 'var(--cream)',
+              fontWeight: 600,
+              marginBottom: 8,
+              fontSize: 12,
+              fontFamily: 'DM Sans',
+            }}
+          >
+            By continuing you allow SpendShame to:
+          </p>
+          {[
+            'Connect your bank account and read transactions via Plaid',
+            'Scan your Gmail for financial emails (receipts, subscriptions, card alerts, insurance, auto-payments)',
+            'Analyze your spending with AI to assign your villain',
+          ].map((item) => (
+            <div
+              key={item}
+              style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'flex-start' }}
+            >
+              <span style={{ color: '#E8341A', flexShrink: 0 }}>✓</span>
+              <span style={{ fontFamily: 'DM Sans' }}>{item}</span>
+            </div>
+          ))}
+          <p
+            style={{
+              marginTop: 10,
+              paddingTop: 10,
+              borderTop: '1px solid rgba(247,242,236,0.08)',
+              fontSize: 10,
+              fontFamily: 'DM Sans',
+            }}
+          >
+            No data stored permanently. Read-only access.
+          </p>
+        </div>
+
         {error && (
           <p style={{ color: '#E8341A', fontFamily: 'DM Sans', fontSize: 14 }}>{error}</p>
         )}
@@ -145,12 +265,8 @@ export default function Landing() {
         )}
 
         <div className="flex flex-col gap-3 w-full max-w-xs">
-          <button
-            className="btn-primary"
-            onClick={handleConnectBank}
-            disabled={loading}
-          >
-            {loading ? 'Connecting...' : 'Connect My Bank'}
+          <button className="btn-primary" onClick={handleConnectBank} disabled={loading}>
+            {loading ? 'Connecting...' : 'I Accept — Connect My Bank'}
           </button>
 
           <button
@@ -181,7 +297,7 @@ export default function Landing() {
             opacity: 0.5,
           }}
         >
-          Plaid Sandbox • No real data stored
+          Plaid Sandbox + Gmail read-only • No real data stored
         </p>
       </motion.div>
     </div>
