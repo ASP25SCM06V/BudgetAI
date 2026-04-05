@@ -112,3 +112,117 @@ export async function splitPay(splitId, person) {
   if (!res.ok) throw new Error(data.error || 'Failed to mark paid')
   return data
 }
+
+// ── BudgetAI v2 API ──────────────────────────────────────────────────
+
+export async function fetchInsights() {
+  const res = await fetch(`${BASE}/insights`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch insights')
+  return data.insights
+}
+
+export async function refreshInsights(transactions) {
+  const res = await fetch(`${BASE}/insights/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactions }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to refresh insights')
+  return data.insights
+}
+
+export async function fetchSubscriptions() {
+  const res = await fetch(`${BASE}/subscriptions`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch subscriptions')
+  return data.subscriptions
+}
+
+export async function scanSubscriptions(transactions) {
+  const res = await fetch(`${BASE}/subscriptions/scan`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactions }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to scan subscriptions')
+  return data.subscriptions
+}
+
+export async function updateSubscriptionStatus(id, status) {
+  const res = await fetch(`${BASE}/subscriptions/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to update subscription')
+  return data.subscriptions
+}
+
+export async function fetchBudgets() {
+  const res = await fetch(`${BASE}/budgets`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch budgets')
+  return data.budgets
+}
+
+export async function saveBudgets(budgets) {
+  const res = await fetch(`${BASE}/budgets`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ budgets }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to save budgets')
+  return data.budgets
+}
+
+export async function fetchCreditCards() {
+  const res = await fetch(`${BASE}/credit-cards`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch credit cards')
+  return data
+}
+
+export async function analyzeCreditCards(cards) {
+  const res = await fetch(`${BASE}/credit-cards/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cards }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to analyze credit cards')
+  return data
+}
+
+export async function fetchHealthScore() {
+  const res = await fetch(`${BASE}/health-score`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch health score')
+  return data.score
+}
+
+export async function computeHealthScore(transactions) {
+  const res = await fetch(`${BASE}/health-score/compute`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactions }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to compute health score')
+  return data.score
+}
+
+export async function getAriaAdvice(message, tx_summary) {
+  const res = await fetch(`${BASE}/aria/advice`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, tx_summary }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to get advice')
+  return data.advice
+}

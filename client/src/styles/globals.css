@@ -2,7 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── BudgetAI v2 design tokens ─────────────────────────────────────── */
 :root {
+  /* New BudgetAI palette */
+  --bg-primary: #0A0A0F;
+  --bg-surface: #111118;
+  --bg-elevated: #1a1a2e;
+  --accent-primary: #6366F1;
+  --accent-secondary: #8B5CF6;
+  --positive: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+  --border: #1E1E2E;
+
+  /* Legacy (keep for old components) */
   --brand: #E8341A;
   --dark: #0F0D0C;
   --cream: #F7F2EC;
@@ -15,9 +31,13 @@
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background-color: var(--dark);
-  color: var(--cream);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   font-family: 'DM Sans', sans-serif;
   font-weight: 400;
   min-height: 100vh;
@@ -28,6 +48,60 @@ h1, h2, h3, h4 {
   font-weight: 800;
 }
 
+/* ── BudgetAI v2 utility classes ────────────────────────────────────── */
+.surface {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.btn-accent {
+  background: var(--accent-primary);
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  font-size: 13px;
+}
+
+.btn-accent:hover { opacity: 0.88; }
+.btn-accent:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.btn-ghost:hover { border-color: var(--accent-primary); color: var(--text-primary); }
+
+/* ── Skeleton loader animation ──────────────────────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-elevated) 50%, var(--bg-surface) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 8px;
+}
+
+/* ── Legacy classes (kept for old components) ───────────────────────── */
 .btn-primary {
   background-color: var(--brand);
   color: white;
@@ -43,14 +117,8 @@ h1, h2, h3, h4 {
   font-size: 14px;
 }
 
-.btn-primary:hover {
-  opacity: 0.88;
-}
-
-.btn-primary:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
+.btn-primary:hover { opacity: 0.88; }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .card {
   background: white;
